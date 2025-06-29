@@ -3,7 +3,7 @@ from typing import Optional, Literal
 from datetime import datetime, date
 
 class Usuario(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     nombre_completo: constr(strip_whitespace=True, min_length=1)
     correo_electronico: EmailStr
     telefono: Optional[constr(min_length=8, max_length=15)]
@@ -14,6 +14,10 @@ class Usuario(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UsuarioLogin(BaseModel):
+    correo_electronico: EmailStr
+    contrasena_hash: constr(min_length=1)
 
 class Categoria(BaseModel):
     id: Optional[int]
@@ -26,6 +30,7 @@ class Categoria(BaseModel):
 
     class Config:
         orm_mode = True
+
 class Cuenta(BaseModel):
     id: Optional[int]
     usuario_id: int
@@ -38,7 +43,6 @@ class Cuenta(BaseModel):
 
     class Config:
         orm_mode = True
-
 
 class Transaccion(BaseModel):
     id: Optional[int]
@@ -65,12 +69,11 @@ class Transferencia(BaseModel):
     class Config:
         orm_mode = True
 
-
 class Presupuesto(BaseModel):
     id: Optional[int]
     usuario_id: int
     categoria_id: int
-    mes: int  # validamos rango abajo
+    mes: int
     anio: int
     monto: condecimal(max_digits=15, decimal_places=2)
     monto_actual: Optional[condecimal(max_digits=15, decimal_places=2)] = 0
@@ -79,13 +82,6 @@ class Presupuesto(BaseModel):
 
     class Config:
         orm_mode = True
-
-    @staticmethod
-    def validate_mes(mes: int):
-        if not (1 <= mes <= 12):
-            raise ValueError("Mes debe estar entre 1 y 12.")
-        return mes
-
 
 class PagoFijo(BaseModel):
     id: Optional[int]
@@ -103,7 +99,6 @@ class PagoFijo(BaseModel):
     class Config:
         orm_mode = True
 
-
 class Meta(BaseModel):
     id: Optional[int]
     usuario_id: int
@@ -117,7 +112,6 @@ class Meta(BaseModel):
 
     class Config:
         orm_mode = True
-
 
 class TransaccionRecurrente(BaseModel):
     id: Optional[int]
@@ -134,7 +128,6 @@ class TransaccionRecurrente(BaseModel):
 
     class Config:
         orm_mode = True
-
 
 class HistorialAlerta(BaseModel):
     id: Optional[int]

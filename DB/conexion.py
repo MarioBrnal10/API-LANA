@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-
 DB_USER = 'root'
 DB_PASSWORD = ''
 DB_HOST = '127.0.0.1'
@@ -19,3 +18,11 @@ Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Base para modelos
 Base = declarative_base()
+
+# 👉 Esta es la función que espera FastAPI con Depends
+def get_db():
+    db = Session()
+    try:
+        yield db
+    finally:
+        db.close()

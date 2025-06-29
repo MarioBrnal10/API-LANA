@@ -1,5 +1,4 @@
-# modelsDB.py
-from sqlalchemy import Column, Integer, String,DECIMAL, Boolean, Date, Text, Enum, ForeignKey, TIMESTAMP, func
+from sqlalchemy import Column, Integer, String, DECIMAL, Boolean, Date, Text, Enum, ForeignKey, TIMESTAMP, func
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -18,7 +17,8 @@ class Usuario(Base):
     actualizado_en = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     categorias = relationship('Categoria', back_populates='usuario')
-
+    cuentas = relationship('Cuenta', back_populates='usuario')
+    transacciones = relationship('Transaccion', back_populates='usuario')
 
 class Categoria(Base):
     __tablename__ = 'categorias'
@@ -48,7 +48,6 @@ class Cuenta(Base):
 
     usuario = relationship("Usuario", back_populates="cuentas")
 
-
 class Transaccion(Base):
     __tablename__ = 'transacciones'
 
@@ -67,34 +66,34 @@ class Transaccion(Base):
     categoria = relationship("Categoria", backref="transacciones")
 
 class Transferencia(Base):
-        __tablename__ = 'transferencias'
+    __tablename__ = 'transferencias'
 
-        id = Column(Integer, primary_key=True, autoincrement=True)
-        usuario_id = Column(Integer, ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
-        transaccion_origen_id = Column(Integer, ForeignKey('transacciones.id', ondelete='CASCADE'), nullable=False)
-        transaccion_destino_id = Column(Integer, ForeignKey('transacciones.id', ondelete='CASCADE'), nullable=False)
-        monto = Column(DECIMAL(15, 2), nullable=False)
-        fecha = Column(Date, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
+    transaccion_origen_id = Column(Integer, ForeignKey('transacciones.id', ondelete='CASCADE'), nullable=False)
+    transaccion_destino_id = Column(Integer, ForeignKey('transacciones.id', ondelete='CASCADE'), nullable=False)
+    monto = Column(DECIMAL(15, 2), nullable=False)
+    fecha = Column(Date, nullable=False)
 
-        usuario = relationship("Usuario", backref="transferencias")
-        transaccion_origen = relationship("Transaccion", foreign_keys=[transaccion_origen_id])
-        transaccion_destino = relationship("Transaccion", foreign_keys=[transaccion_destino_id])
+    usuario = relationship("Usuario", backref="transferencias")
+    transaccion_origen = relationship("Transaccion", foreign_keys=[transaccion_origen_id])
+    transaccion_destino = relationship("Transaccion", foreign_keys=[transaccion_destino_id])
 
 class Presupuesto(Base):
-        __tablename__ = 'presupuestos'
+    __tablename__ = 'presupuestos'
 
-        id = Column(Integer, primary_key=True, autoincrement=True)
-        usuario_id = Column(Integer, ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
-        categoria_id = Column(Integer, ForeignKey('categorias.id', ondelete='CASCADE'), nullable=False)
-        mes = Column(Integer, nullable=False)  # Validación del rango se hace en Pydantic
-        anio = Column(Integer, nullable=False)
-        monto = Column(DECIMAL(15, 2), nullable=False)
-        monto_actual = Column(DECIMAL(15, 2), default=0)
-        creado_en = Column(TIMESTAMP, server_default=func.now())
-        actualizado_en = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    usuario_id = Column(Integer, ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
+    categoria_id = Column(Integer, ForeignKey('categorias.id', ondelete='CASCADE'), nullable=False)
+    mes = Column(Integer, nullable=False)
+    anio = Column(Integer, nullable=False)
+    monto = Column(DECIMAL(15, 2), nullable=False)
+    monto_actual = Column(DECIMAL(15, 2), default=0)
+    creado_en = Column(TIMESTAMP, server_default=func.now())
+    actualizado_en = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
-        usuario = relationship("Usuario", backref="presupuestos")
-        categoria = relationship("Categoria", backref="presupuestos")
+    usuario = relationship("Usuario", backref="presupuestos")
+    categoria = relationship("Categoria", backref="presupuestos")
 
 class PagoFijo(Base):
     __tablename__ = 'pagos_fijos'
@@ -115,7 +114,6 @@ class PagoFijo(Base):
     cuenta = relationship("Cuenta")
     categoria = relationship("Categoria")
 
-
 class Meta(Base):
     __tablename__ = 'metas'
 
@@ -130,7 +128,6 @@ class Meta(Base):
     creado_en = Column(TIMESTAMP, server_default=func.now())
 
     usuario = relationship("Usuario", backref="metas")
-
 
 class TransaccionRecurrente(Base):
     __tablename__ = 'transacciones_recurrentes'
@@ -151,7 +148,6 @@ class TransaccionRecurrente(Base):
     categoria = relationship("Categoria")
     cuenta = relationship("Cuenta")
 
-
 class HistorialAlerta(Base):
     __tablename__ = 'historial_alertas'
 
@@ -163,5 +159,3 @@ class HistorialAlerta(Base):
     leida = Column(Boolean, default=False)
 
     usuario = relationship("Usuario", backref="historial_alertas")
-
-

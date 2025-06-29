@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routers.usuarios import routerUsuarios
+from routers.transacciones import routerTransacciones
+from routers.presupuestos import routerPresupuestos
 
 app = FastAPI(
     title='API LANA APP',
@@ -16,11 +19,9 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
 
+app.include_router(routerUsuarios)
+app.include_router(routerTransacciones)
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+app.include_router(routerPresupuestos)
+
