@@ -12,7 +12,7 @@ from modelsPydantic import Presupuesto as PresupuestoPydantic
 routerPagosFijos = APIRouter()
 
 
-@routerPagosFijos.get("/pagos-fijos/validar-presupuesto/{usuario_id}")
+@routerPagosFijos.get("/pagos-fijos/validar-presupuesto/{usuario_id}", tags=["Presupuestos"])
 def validar_pagos_fijos_contra_presupuesto(usuario_id: int, db: Session = Depends(get_db)):
     now = datetime.now()
     mes = now.month

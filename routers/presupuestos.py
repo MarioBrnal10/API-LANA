@@ -92,7 +92,7 @@ def eliminar_presupuesto(id: int, db: Session = Depends(get_db)):
 
 # 🔹 Obtencion de datos de exceso de presupuesto y mensaje alerta 
 
-@routerPresupuestos.get("/presupuesto-alerta/{usuario_id}")
+@routerPresupuestos.get("/presupuesto-alerta/{usuario_id}", tags=["Presupuestos"])
 def verificar_exceso_presupuesto(usuario_id: int, db: Session = Depends(get_db)):
     now = datetime.now()
     mes = now.month

@@ -9,7 +9,7 @@ from models.modelsDB import Transaccion, Categoria, Presupuesto  # tus modelos S
 routerGrafica = APIRouter()
 
 
-@routerGrafica.get("/grafica/{usuario_id}")
+@routerGrafica.get("/grafica/{usuario_id}", tags=["Grafica"])
 def obtener_grafica_por_categoria(usuario_id: int, db: Session = Depends(get_db)):
     resultados = db.execute(text("""
     SELECT c.nombre, c.tipo, SUM(t.monto) as total
