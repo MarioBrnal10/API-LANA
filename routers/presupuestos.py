@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
-
+from sqlalchemy import text
 from DB.conexion import get_db
 from models.modelsDB import Presupuesto
 from modelsPydantic import Presupuesto as PresupuestoPydantic
@@ -88,3 +88,36 @@ def eliminar_presupuesto(id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Error al eliminar presupuesto: {str(e)}")
     finally:
         db.close()
+
+
+# 🔹 Obtencion de datos de exceso de presupuesto y mensaje alerta 
+
+@routerPresupuestos.get("/presupuesto-alerta/{usuario_id}")
+def verificar_exceso_presupuesto(usuario_id: int, db: Session = Depends(get_db)):
+    now = datetime.now()
+    mes = now.month
+    anio = now.year
+
+    sql = text("""
+        SELECT c.nombre AS categoria, p.monto, p.monto_actual
+        FROM presupuestos p
+        JOIN categorias c ON c.id = p.categoria_id
+        WHERE p.usuario_id = :usuario_id AND p.mes = :mes AND p.anio = :anio
+    """)
+
+    resultados = db.execute(sql, {"usuario_id": usuario_id, "mes": mes, "anio": anio}).fetchall()
+
+    alertas = []
+    for r in resultados:
+        if r.monto_actual > r.monto:
+            alertas.append({
+                "categoria": r.categoria,
+                "presupuesto": float(r.monto),
+                "gastado": float(r.monto_actual),
+                "exceso": round(r.monto_actual - r.monto, 2)
+            })
+
+    return {
+        "alertas_exceso": alertas,
+        "mensaje": "Hay exceso en algunas categorías" if alertas else "Todo está dentro del presupuesto"
+    }

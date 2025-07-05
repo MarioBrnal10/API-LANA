@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.usuarios import routerUsuarios
 from routers.transacciones import routerTransacciones
 from routers.presupuestos import routerPresupuestos
-
+from routers.grafica import routerGrafica
+from routers.PagosFijos import routerPagosFijos
 app = FastAPI(
     title='API LANA APP',
     description='API PARA LA APLICACION LANA APP',
@@ -22,6 +23,7 @@ app.add_middleware(
 
 app.include_router(routerUsuarios)
 app.include_router(routerTransacciones)
-
 app.include_router(routerPresupuestos)
+app.include_router(routerGrafica)
+app.include_router(routerPagosFijos)
 
