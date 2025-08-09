@@ -1,25 +1,22 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+import os
+from dotenv import load_dotenv
 
-DB_USER = 'root'
-DB_PASSWORD = ''
-DB_HOST = '127.0.0.1'
-DB_PORT = '3306'
-DB_NAME = 'lana3'
+load_dotenv()
 
-SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+# Formato de Railway para MySQL
+DATABASE_URL = os.getenv("DATABASE_URL", "mysql://root:xCJhHTKkZujUpKSFPQdCvLSlmfFGlYok@hopper.proxy.rlwy.net:38040/railway")
 
-# Crear el motor de conexión
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
+# Convertir la URL de Railway al formato que SQLAlchemy espera para MySQL
+if DATABASE_URL.startswith("mysql://"):
+    DATABASE_URL = DATABASE_URL.replace("mysql://", "mysql+pymysql://", 1)
 
-# Crear la sesión
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=3600)
 Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base para modelos
 Base = declarative_base()
 
-# 👉 Esta es la función que espera FastAPI con Depends
 def get_db():
     db = Session()
     try:
