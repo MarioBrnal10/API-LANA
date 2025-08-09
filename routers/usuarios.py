@@ -25,7 +25,7 @@ def login(usuario: UsuarioLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
 
     return JSONResponse(content={
-        "mensaje": "✅ Inicio de sesión exitoso",
+        "mensaje": " Inicio de sesión exitoso",
         "id": user.id,
         "nombre_completo": user.nombre_completo,
         "correo_electronico": user.correo_electronico,
@@ -64,7 +64,7 @@ def crear_usuario(usuario: UsuarioPydantic, db: Session = Depends(get_db)):
         db.refresh(nuevo_usuario)
 
         return JSONResponse(content={
-            "message": "✅ Usuario creado correctamente",
+            "message": " Usuario creado correctamente",
             "id": nuevo_usuario.id
         })
 
@@ -73,7 +73,7 @@ def crear_usuario(usuario: UsuarioPydantic, db: Session = Depends(get_db)):
 
         db.rollback()
 
-        print("🔥 ERROR AL CREAR USUARIO:", str(e))  # 👈 esto te dirá el error exacto en la terminal
+        print(" ERROR AL CREAR USUARIO:", str(e))  # 👈 esto te dirá el error exacto en la terminal
 
         raise HTTPException(status_code=500, detail=f"Error al crear usuario: {str(e)}")
 
