@@ -5,20 +5,20 @@ from typing import List, Optional, Literal
 
 from DB.conexion import get_db
 
-# 🧠 SQLAlchemy model
+# SQLAlchemy
 from models.modelsDB import Categoria as CategoriaDB
 
-# 🧠 Pydantic models (I/O separados)
+# Pydantic I/O
 from modelsPydantic import (
-    Categoria as CategoriaOut,   # respuesta
-    CategoriaCreate,             # entrada POST
-    CategoriaUpdate,             # entrada PUT (parcial)
+    Categoria as CategoriaOut,
+    CategoriaCreate,
+    CategoriaUpdate,
 )
 
 routercategorias = APIRouter()
 
-# 🔹 Listar categorías (con filtros opcionales)
-@routercategorias.get("/categorias", response_model=List[CategoriaOut], tags=["Categorias"])
+# Listar con filtros opcionales
+@routercategorias.get("/categorias", response_model=List[CategoriaOut], tags=["Categorias"]) 
 def listar_categorias(
     db: Session = Depends(get_db),
     usuario_id: Optional[int] = Query(None, description="Filtra por usuario"),
@@ -36,8 +36,7 @@ def listar_categorias(
     finally:
         db.close()
 
-# 🔹 Obtener categoría por ID
-@routercategorias.get("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"])
+@routercategorias.get("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"]) 
 def obtener_categoria(id: int, db: Session = Depends(get_db)):
     try:
         cat = db.query(CategoriaDB).filter(CategoriaDB.id == id).first()
@@ -51,17 +50,15 @@ def obtener_categoria(id: int, db: Session = Depends(get_db)):
     finally:
         db.close()
 
-# 🔹 Crear nueva categoría (sin pedir usuario_id ni es_sistema)
-@routercategorias.post("/categorias", response_model=CategoriaOut, tags=["Categorias"])
+@routercategorias.post("/categorias", response_model=CategoriaOut, tags=["Categorias"]) 
 def crear_categoria(data: CategoriaCreate, db: Session = Depends(get_db)):
     try:
         nueva = CategoriaDB(
             nombre=data.nombre.strip(),
-            tipo=data.tipo.lower(),              # Enum espera 'ingreso'/'egreso'
-            usuario_id=None,                     # luego puedes tomarlo del token
+            tipo=data.tipo,
+            usuario_id=None,
             categoria_padre_id=data.categoria_padre_id,
-            es_sistema=False,                    # por defecto
-            # creado_en lo setea el server_default en el modelo
+            es_sistema=False,
         )
         db.add(nueva)
         db.commit()
@@ -73,8 +70,7 @@ def crear_categoria(data: CategoriaCreate, db: Session = Depends(get_db)):
     finally:
         db.close()
 
-# 🔹 Actualizar categoría (parcial)
-@routercategorias.put("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"])
+@routercategorias.put("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"]) 
 def actualizar_categoria(id: int, data: CategoriaUpdate, db: Session = Depends(get_db)):
     try:
         cat = db.query(CategoriaDB).filter(CategoriaDB.id == id).first()
@@ -84,11 +80,10 @@ def actualizar_categoria(id: int, data: CategoriaUpdate, db: Session = Depends(g
         if data.nombre is not None:
             cat.nombre = data.nombre.strip()
         if data.tipo is not None:
-            cat.tipo = data.tipo.lower()
+            cat.tipo = data.tipo
         if data.categoria_padre_id is not None:
             cat.categoria_padre_id = data.categoria_padre_id
 
-        # usuario_id y es_sistema se controlan en servidor; no se actualizan desde el cliente
         db.commit()
         db.refresh(cat)
         return cat
@@ -100,8 +95,7 @@ def actualizar_categoria(id: int, data: CategoriaUpdate, db: Session = Depends(g
     finally:
         db.close()
 
-# 🔹 Eliminar categoría
-@routercategorias.delete("/categorias/{id}", tags=["Categorias"])
+@routercategorias.delete("/categorias/{id}", tags=["Categorias"]) 
 def eliminar_categoria(id: int, db: Session = Depends(get_db)):
     try:
         cat = db.query(CategoriaDB).filter(CategoriaDB.id == id).first()

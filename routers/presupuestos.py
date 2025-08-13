@@ -10,21 +10,21 @@ from modelsPydantic import Presupuesto as PresupuestoPydantic
 
 routerPresupuestos = APIRouter()
 
-# 🔹 Obtener todos los presupuestos
-@routerPresupuestos.get("/presupuestos", response_model=List[PresupuestoPydantic], tags=["Presupuestos"])
+# Obtener todos los presupuestos
+@routerPresupuestos.get("/presupuestos", response_model=List[PresupuestoPydantic], tags=["Presupuestos"]) 
 def get_presupuestos(db: Session = Depends(get_db)):
     return db.query(Presupuesto).all()
 
-# 🔹 Obtener presupuesto por ID
-@routerPresupuestos.get("/presupuestos/{id}", response_model=PresupuestoPydantic, tags=["Presupuestos"])
+# Obtener por ID
+@routerPresupuestos.get("/presupuestos/{id}", response_model=PresupuestoPydantic, tags=["Presupuestos"]) 
 def get_presupuesto(id: int, db: Session = Depends(get_db)):
     presupuesto = db.query(Presupuesto).filter(Presupuesto.id == id).first()
     if not presupuesto:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
     return presupuesto
 
-# 🔹 Crear nuevo presupuesto
-@routerPresupuestos.post("/presupuestos", response_model=PresupuestoPydantic, tags=["Presupuestos"])
+# Crear
+@routerPresupuestos.post("/presupuestos", response_model=PresupuestoPydantic, tags=["Presupuestos"]) 
 def crear_presupuesto(data: PresupuestoPydantic, db: Session = Depends(get_db)):
     try:
         nuevo = Presupuesto(
@@ -47,8 +47,8 @@ def crear_presupuesto(data: PresupuestoPydantic, db: Session = Depends(get_db)):
     finally:
         db.close()
 
-# 🔹 Actualizar presupuesto
-@routerPresupuestos.put("/presupuestos/{id}", response_model=PresupuestoPydantic, tags=["Presupuestos"])
+# Actualizar
+@routerPresupuestos.put("/presupuestos/{id}", response_model=PresupuestoPydantic, tags=["Presupuestos"]) 
 def actualizar_presupuesto(id: int, data: PresupuestoPydantic, db: Session = Depends(get_db)):
     try:
         presupuesto = db.query(Presupuesto).filter(Presupuesto.id == id).first()
@@ -72,8 +72,8 @@ def actualizar_presupuesto(id: int, data: PresupuestoPydantic, db: Session = Dep
     finally:
         db.close()
 
-# 🔹 Eliminar presupuesto
-@routerPresupuestos.delete("/presupuestos/{id}", tags=["Presupuestos"])
+# Eliminar
+@routerPresupuestos.delete("/presupuestos/{id}", tags=["Presupuestos"]) 
 def eliminar_presupuesto(id: int, db: Session = Depends(get_db)):
     try:
         presupuesto = db.query(Presupuesto).filter(Presupuesto.id == id).first()
@@ -89,10 +89,8 @@ def eliminar_presupuesto(id: int, db: Session = Depends(get_db)):
     finally:
         db.close()
 
-
-# 🔹 Obtencion de datos de exceso de presupuesto y mensaje alerta 
-
-@routerPresupuestos.get("/presupuesto-alerta/{usuario_id}", tags=["Presupuestos"])
+# Alertas de exceso (mes/año actual)
+@routerPresupuestos.get("/presupuesto-alerta/{usuario_id}", tags=["Presupuestos"]) 
 def verificar_exceso_presupuesto(usuario_id: int, db: Session = Depends(get_db)):
     now = datetime.now()
     mes = now.month
@@ -114,7 +112,7 @@ def verificar_exceso_presupuesto(usuario_id: int, db: Session = Depends(get_db))
                 "categoria": r.categoria,
                 "presupuesto": float(r.monto),
                 "gastado": float(r.monto_actual),
-                "exceso": round(r.monto_actual - r.monto, 2)
+                "exceso": round(float(r.monto_actual) - float(r.monto), 2)
             })
 
     return {

@@ -1,4 +1,4 @@
-# 📂 routers/transacciones.py (o donde tengas esto)
+# 📂 routers/transacciones.py
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
@@ -15,7 +15,7 @@ routerTransacciones = APIRouter()
 @routerTransacciones.get("/transacciones", response_model=List[TransaccionOut], tags=["Transacciones"])
 def get_transacciones(db: Session = Depends(get_db)):
     try:
-        return db.query(Transaccion).all()
+        return db.query(Transaccion).order_by(Transaccion.id.desc()).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al listar transacciones: {str(e)}")
     finally:
@@ -39,26 +39,18 @@ def get_transaccion(id: int, db: Session = Depends(get_db)):
 # 🔹 Crear nueva transacción
 @routerTransacciones.post("/transacciones", response_model=TransaccionOut, tags=["Transacciones"])
 def crear_transaccion(data: TransaccionCreate, db: Session = Depends(get_db)):
-    """
-    Crea una transacción.
-    - usuario_id: opcional (si no viene, por ahora default 1; idealmente vendrá del token)
-    - cuenta_id: opcional/nullable
-    - fecha: opcional (hoy si no viene)
-    """
     try:
-        # TODO: cuando tengas auth, saca user_id del token:
-        # user_id = get_current_user_id()
-        user_id = data.usuario_id if data.usuario_id is not None else 1
-
+        # si no mandan usuario_id desde el cliente, asigna 1 por defecto (hasta que haya login real)
+        usuario_id = data.usuario_id if data.usuario_id is not None else 1
         nueva = Transaccion(
-            usuario_id=user_id,
-            cuenta_id=data.cuenta_id,  # puede ser None
+            usuario_id=usuario_id,
+            cuenta_id=data.cuenta_id,
             categoria_id=data.categoria_id,
             monto=data.monto,
             tipo=data.tipo,
             descripcion=data.descripcion,
             fecha=data.fecha or date.today(),
-            creado_en=datetime.now(),
+            creado_en=datetime.now()
         )
         db.add(nueva)
         db.commit()
@@ -73,19 +65,15 @@ def crear_transaccion(data: TransaccionCreate, db: Session = Depends(get_db)):
 # 🔹 Actualizar transacción (parcial)
 @routerTransacciones.put("/transacciones/{id}", response_model=TransaccionOut, tags=["Transacciones"])
 def actualizar_transaccion(id: int, data: TransaccionUpdate, db: Session = Depends(get_db)):
-    """
-    Update parcial: solo cambia lo que venga en el body.
-    """
     try:
         transaccion = db.query(Transaccion).filter(Transaccion.id == id).first()
         if not transaccion:
             raise HTTPException(status_code=404, detail="Transacción no encontrada")
 
-        # Actualiza solo los campos presentes
         if data.usuario_id is not None:
             transaccion.usuario_id = data.usuario_id
         if data.cuenta_id is not None:
-            transaccion.cuenta_id = data.cuenta_id  # puede ser None
+            transaccion.cuenta_id = data.cuenta_id
         if data.categoria_id is not None:
             transaccion.categoria_id = data.categoria_id
         if data.monto is not None:
@@ -100,8 +88,6 @@ def actualizar_transaccion(id: int, data: TransaccionUpdate, db: Session = Depen
         db.commit()
         db.refresh(transaccion)
         return transaccion
-    except HTTPException:
-        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al actualizar transacción: {str(e)}")
