@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional, Literal
+from sqlalchemy import or_
 
 from DB.conexion import get_db
 
@@ -17,26 +18,47 @@ from modelsPydantic import (
 
 routercategorias = APIRouter()
 
-# Listar con filtros opcionales
-@routercategorias.get("/categorias", response_model=List[CategoriaOut], tags=["Categorias"]) 
+
+# ============================
+# 📌 Listar categorías
+# ============================
+@routercategorias.get("/categorias", response_model=List[CategoriaOut], tags=["Categorias"])
 def listar_categorias(
     db: Session = Depends(get_db),
     usuario_id: Optional[int] = Query(None, description="Filtra por usuario"),
     tipo: Optional[Literal["ingreso", "egreso"]] = Query(None, description="Filtra por tipo"),
 ):
+    """
+    Lista categorías.
+    - Si se pasa usuario_id: devuelve categorías globales (es_sistema=True) + las del usuario.
+    - Si no se pasa usuario_id: solo devuelve las globales.
+    - Se puede filtrar por tipo: 'ingreso' o 'egreso'.
+    """
     try:
         query = db.query(CategoriaDB)
+
         if usuario_id is not None:
-            query = query.filter(CategoriaDB.usuario_id == usuario_id)
+            # Categorías globales + del usuario
+            query = query.filter(
+                or_(CategoriaDB.es_sistema == True, CategoriaDB.usuario_id == usuario_id)
+            )
+        else:
+            # Solo globales
+            query = query.filter(CategoriaDB.es_sistema == True)
+
         if tipo is not None:
             query = query.filter(CategoriaDB.tipo == tipo)
+
         return query.order_by(CategoriaDB.id.desc()).all()
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al listar categorías: {str(e)}")
-    finally:
-        db.close()
 
-@routercategorias.get("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"]) 
+
+# ============================
+# 📌 Obtener categoría por ID
+# ============================
+@routercategorias.get("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"])
 def obtener_categoria(id: int, db: Session = Depends(get_db)):
     try:
         cat = db.query(CategoriaDB).filter(CategoriaDB.id == id).first()
@@ -47,16 +69,18 @@ def obtener_categoria(id: int, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener categoría: {str(e)}")
-    finally:
-        db.close()
 
-@routercategorias.post("/categorias", response_model=CategoriaOut, tags=["Categorias"]) 
+
+# ============================
+# 📌 Crear categoría
+# ============================
+@routercategorias.post("/categorias", response_model=CategoriaOut, tags=["Categorias"])
 def crear_categoria(data: CategoriaCreate, db: Session = Depends(get_db)):
     try:
         nueva = CategoriaDB(
             nombre=data.nombre.strip(),
             tipo=data.tipo,
-            usuario_id=None,
+            usuario_id=data.usuario_id,  # ✅ ahora soporta categorías por usuario
             categoria_padre_id=data.categoria_padre_id,
             es_sistema=False,
         )
@@ -67,10 +91,12 @@ def crear_categoria(data: CategoriaCreate, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al crear categoría: {str(e)}")
-    finally:
-        db.close()
 
-@routercategorias.put("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"]) 
+
+# ============================
+# 📌 Actualizar categoría
+# ============================
+@routercategorias.put("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"])
 def actualizar_categoria(id: int, data: CategoriaUpdate, db: Session = Depends(get_db)):
     try:
         cat = db.query(CategoriaDB).filter(CategoriaDB.id == id).first()
@@ -83,6 +109,8 @@ def actualizar_categoria(id: int, data: CategoriaUpdate, db: Session = Depends(g
             cat.tipo = data.tipo
         if data.categoria_padre_id is not None:
             cat.categoria_padre_id = data.categoria_padre_id
+        if hasattr(data, "usuario_id") and data.usuario_id is not None:
+            cat.usuario_id = data.usuario_id
 
         db.commit()
         db.refresh(cat)
@@ -92,10 +120,12 @@ def actualizar_categoria(id: int, data: CategoriaUpdate, db: Session = Depends(g
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al actualizar categoría: {str(e)}")
-    finally:
-        db.close()
 
-@routercategorias.delete("/categorias/{id}", tags=["Categorias"]) 
+
+# ============================
+# 📌 Eliminar categoría
+# ============================
+@routercategorias.delete("/categorias/{id}", tags=["Categorias"])
 def eliminar_categoria(id: int, db: Session = Depends(get_db)):
     try:
         cat = db.query(CategoriaDB).filter(CategoriaDB.id == id).first()
@@ -110,5 +140,3 @@ def eliminar_categoria(id: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al eliminar categoría: {str(e)}")
-    finally:
-        db.close()
