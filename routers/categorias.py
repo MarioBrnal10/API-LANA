@@ -20,31 +20,19 @@ routercategorias = APIRouter()
 
 
 # ============================
-# 📌 Listar categorías
+# 📌 Listar todas las categorías
 # ============================
 @routercategorias.get("/categorias", response_model=List[CategoriaOut], tags=["Categorias"])
 def listar_categorias(
     db: Session = Depends(get_db),
-    usuario_id: Optional[int] = Query(None, description="Filtra por usuario"),
     tipo: Optional[Literal["ingreso", "egreso"]] = Query(None, description="Filtra por tipo"),
 ):
     """
-    Lista categorías.
-    - Si se pasa usuario_id: devuelve categorías globales (es_sistema=True) + las del usuario.
-    - Si no se pasa usuario_id: solo devuelve las globales.
-    - Se puede filtrar por tipo: 'ingreso' o 'egreso'.
+    Lista todas las categorías sin importar el usuario ni si es sistema.
+    Se puede filtrar opcionalmente por tipo: 'ingreso' o 'egreso'.
     """
     try:
         query = db.query(CategoriaDB)
-
-        if usuario_id is not None:
-            # Categorías globales + del usuario
-            query = query.filter(
-                or_(CategoriaDB.es_sistema == True, CategoriaDB.usuario_id == usuario_id)
-            )
-        else:
-            # Solo globales
-            query = query.filter(CategoriaDB.es_sistema == True)
 
         if tipo is not None:
             query = query.filter(CategoriaDB.tipo == tipo)
@@ -53,6 +41,7 @@ def listar_categorias(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al listar categorías: {str(e)}")
+
 
 
 # ============================
