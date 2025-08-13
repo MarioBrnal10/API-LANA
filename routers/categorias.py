@@ -2,20 +2,23 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional, Literal
-from datetime import datetime
 
 from DB.conexion import get_db
 
-# 🧠 SQLAlchemy models (ajusta el import a tu proyecto)
-from models.modelsDB import Categoria as CategoriaDB  # Modelo SQLAlchemy
+# 🧠 SQLAlchemy model
+from models.modelsDB import Categoria as CategoriaDB
 
-# 🧠 Pydantic models (el que tú ya tienes)
-from modelsPydantic import Categoria as CategoriaSchema  # tu schema mostrado
+# 🧠 Pydantic models (I/O separados)
+from modelsPydantic import (
+    Categoria as CategoriaOut,   # respuesta
+    CategoriaCreate,             # entrada POST
+    CategoriaUpdate,             # entrada PUT (parcial)
+)
 
 routercategorias = APIRouter()
 
-# 🔹 Obtener todas las categorías (con filtros opcionales)
-@routercategorias.get("/categorias", response_model=List[CategoriaSchema], tags=["Categorias"])
+# 🔹 Listar categorías (con filtros opcionales)
+@routercategorias.get("/categorias", response_model=List[CategoriaOut], tags=["Categorias"])
 def listar_categorias(
     db: Session = Depends(get_db),
     usuario_id: Optional[int] = Query(None, description="Filtra por usuario"),
@@ -34,7 +37,7 @@ def listar_categorias(
         db.close()
 
 # 🔹 Obtener categoría por ID
-@routercategorias.get("/categorias/{id}", response_model=CategoriaSchema, tags=["Categorias"])
+@routercategorias.get("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"])
 def obtener_categoria(id: int, db: Session = Depends(get_db)):
     try:
         cat = db.query(CategoriaDB).filter(CategoriaDB.id == id).first()
@@ -48,17 +51,17 @@ def obtener_categoria(id: int, db: Session = Depends(get_db)):
     finally:
         db.close()
 
-# 🔹 Crear nueva categoría
-@routercategorias.post("/categorias", response_model=CategoriaSchema, tags=["Categorias"])
-def crear_categoria(data: CategoriaSchema, db: Session = Depends(get_db)):
+# 🔹 Crear nueva categoría (sin pedir usuario_id ni es_sistema)
+@routercategorias.post("/categorias", response_model=CategoriaOut, tags=["Categorias"])
+def crear_categoria(data: CategoriaCreate, db: Session = Depends(get_db)):
     try:
         nueva = CategoriaDB(
             nombre=data.nombre.strip(),
-            tipo=data.tipo,
-            usuario_id=data.usuario_id,
+            tipo=data.tipo.lower(),              # Enum espera 'ingreso'/'egreso'
+            usuario_id=None,                     # luego puedes tomarlo del token
             categoria_padre_id=data.categoria_padre_id,
-            es_sistema=bool(data.es_sistema) if data.es_sistema is not None else False,
-            creado_en=datetime.now(),
+            es_sistema=False,                    # por defecto
+            # creado_en lo setea el server_default en el modelo
         )
         db.add(nueva)
         db.commit()
@@ -70,26 +73,22 @@ def crear_categoria(data: CategoriaSchema, db: Session = Depends(get_db)):
     finally:
         db.close()
 
-# 🔹 Actualizar categoría
-@routercategorias.put("/categorias/{id}", response_model=CategoriaSchema, tags=["Categorias"])
-def actualizar_categoria(id: int, data: CategoriaSchema, db: Session = Depends(get_db)):
+# 🔹 Actualizar categoría (parcial)
+@routercategorias.put("/categorias/{id}", response_model=CategoriaOut, tags=["Categorias"])
+def actualizar_categoria(id: int, data: CategoriaUpdate, db: Session = Depends(get_db)):
     try:
         cat = db.query(CategoriaDB).filter(CategoriaDB.id == id).first()
         if not cat:
             raise HTTPException(status_code=404, detail="Categoría no encontrada")
 
-        # Solo actualiza campos provistos (tu schema los trae opcionales)
         if data.nombre is not None:
             cat.nombre = data.nombre.strip()
         if data.tipo is not None:
-            cat.tipo = data.tipo
-        if data.usuario_id is not None:
-            cat.usuario_id = data.usuario_id
+            cat.tipo = data.tipo.lower()
         if data.categoria_padre_id is not None:
             cat.categoria_padre_id = data.categoria_padre_id
-        if data.es_sistema is not None:
-            cat.es_sistema = bool(data.es_sistema)
 
+        # usuario_id y es_sistema se controlan en servidor; no se actualizan desde el cliente
         db.commit()
         db.refresh(cat)
         return cat

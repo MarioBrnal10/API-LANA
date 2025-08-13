@@ -2,6 +2,8 @@ from pydantic import BaseModel, EmailStr, constr, condecimal
 from typing import Optional, Literal
 from datetime import datetime, date
 
+# ---------------- Usuarios ----------------
+
 class Usuario(BaseModel):
     id: Optional[int] = None
     nombre_completo: constr(strip_whitespace=True, min_length=1)
@@ -19,6 +21,9 @@ class UsuarioLogin(BaseModel):
     correo_electronico: EmailStr
     contrasena_hash: constr(min_length=1)
 
+# ---------------- Categorías ----------------
+
+# Output (respuesta)
 class Categoria(BaseModel):
     id: Optional[int]
     nombre: constr(strip_whitespace=True, min_length=1)
@@ -30,6 +35,20 @@ class Categoria(BaseModel):
 
     class Config:
         orm_mode = True
+
+# Input (crear)
+class CategoriaCreate(BaseModel):
+    nombre: constr(strip_whitespace=True, min_length=1)
+    tipo: Literal['ingreso', 'egreso']
+    categoria_padre_id: Optional[int] = None
+
+# Input (actualizar parcial)
+class CategoriaUpdate(BaseModel):
+    nombre: Optional[constr(strip_whitespace=True, min_length=1)] = None
+    tipo: Optional[Literal['ingreso', 'egreso']] = None
+    categoria_padre_id: Optional[int] = None
+
+# ---------------- Cuentas ----------------
 
 class Cuenta(BaseModel):
     id: Optional[int]
@@ -43,6 +62,8 @@ class Cuenta(BaseModel):
 
     class Config:
         orm_mode = True
+
+# ---------------- Transacciones ----------------
 
 class Transaccion(BaseModel):
     id: Optional[int]
@@ -69,6 +90,8 @@ class Transferencia(BaseModel):
     class Config:
         orm_mode = True
 
+# ---------------- Presupuestos ----------------
+
 class Presupuesto(BaseModel):
     id: Optional[int]
     usuario_id: int
@@ -82,6 +105,8 @@ class Presupuesto(BaseModel):
 
     class Config:
         orm_mode = True
+
+# ---------------- Pagos Fijos ----------------
 
 class PagoFijo(BaseModel):
     id: Optional[int]
@@ -99,6 +124,8 @@ class PagoFijo(BaseModel):
     class Config:
         orm_mode = True
 
+# ---------------- Metas ----------------
+
 class Meta(BaseModel):
     id: Optional[int]
     usuario_id: int
@@ -112,6 +139,8 @@ class Meta(BaseModel):
 
     class Config:
         orm_mode = True
+
+# ---------------- Transacciones Recurrentes ----------------
 
 class TransaccionRecurrente(BaseModel):
     id: Optional[int]
@@ -128,6 +157,8 @@ class TransaccionRecurrente(BaseModel):
 
     class Config:
         orm_mode = True
+
+# ---------------- Historial de Alertas ----------------
 
 class HistorialAlerta(BaseModel):
     id: Optional[int]

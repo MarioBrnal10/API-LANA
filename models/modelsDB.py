@@ -34,6 +34,8 @@ class Categoria(Base):
     usuario = relationship('Usuario', back_populates='categorias')
     categoria_padre = relationship('Categoria', remote_side=[id])
 
+
+
 class Cuenta(Base):
     __tablename__ = 'cuentas'
 
