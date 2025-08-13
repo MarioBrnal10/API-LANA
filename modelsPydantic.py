@@ -157,7 +157,43 @@ class TransaccionRecurrente(BaseModel):
 
     class Config:
         orm_mode = True
+# ---------- TRANSACCIONES ----------
+class TransaccionBase(BaseModel):
+    usuario_id: Optional[int] = None           # ahora opcional (lo asignamos en el backend si no viene)
+    cuenta_id: Optional[int] = None            # puede ser null
+    categoria_id: int                          # requerido para crear
+    monto: condecimal(max_digits=15, decimal_places=2)
+    tipo: Literal['ingreso', 'egreso']
+    descripcion: Optional[str] = None
+    fecha: Optional[date] = None               # opcional; backend usa hoy si no viene
 
+class TransaccionCreate(TransaccionBase):
+    # Igual que base para este caso (categoria_id/monto/tipo requeridos)
+    pass
+
+class TransaccionUpdate(BaseModel):
+    # TODO parcial: todo opcional; actualiza solo lo presente
+    usuario_id: Optional[int] = None
+    cuenta_id: Optional[int] = None
+    categoria_id: Optional[int] = None
+    monto: Optional[condecimal(max_digits=15, decimal_places=2)] = None
+    tipo: Optional[Literal['ingreso', 'egreso']] = None
+    descripcion: Optional[str] = None
+    fecha: Optional[date] = None
+
+class TransaccionOut(BaseModel):
+    id: int
+    usuario_id: Optional[int]
+    cuenta_id: Optional[int]
+    categoria_id: Optional[int]
+    monto: condecimal(max_digits=15, decimal_places=2)
+    tipo: Literal['ingreso', 'egreso']
+    descripcion: Optional[str]
+    fecha: date
+    creado_en: Optional[datetime]
+
+    class Config:
+        orm_mode = True
 # ---------------- Historial de Alertas ----------------
 
 class HistorialAlerta(BaseModel):
